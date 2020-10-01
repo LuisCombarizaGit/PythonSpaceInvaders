@@ -10,12 +10,12 @@ pygame.display.set_caption("Space Invaders")
 
 
 # Load Enemy graphics
-RED_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_red_small.png"))
-GREEN_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_green_small.png"))
-BLUE_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_blue_small.png"))
+RED_SPACE_ = pygame.image.load(os.path.join("pixel_ship_red_small.png"))
+GREEN_SPACE_ = pygame.image.load(os.path.join("pixel_ship_green_small.png"))
+BLUE_SPACE_ = pygame.image.load(os.path.join("pixel_ship_blue_small.png"))
 
-# Load player ship
-YELLOW_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_yellow.png"))
+# Load player 
+YELLOW_SPACE_ = pygame.image.load(os.path.join("pixel_ship_yellow.png"))
 
 # Load laser
 RED_LASER = pygame.image.load(os.path.join("pixel_laser_red.png"))
@@ -26,17 +26,33 @@ YELLOW_LASER = pygame.image.load(os.path.join("pixel_laser_yellow.png"))
 # Background
 BG = pygame.transform.scale(pygame.image.load(os.path.join("background-black.png")), (WIDTH, HEIGHT))
 
-#Abstract class I will use to inherent all other ships
-class Ship:
-    def __init__(self,x_position,y_position, health= 100):
+# Abstract class I will use to inherent all other s
+class Ship():
+    def __init__(self, x_position, y_position, health = 100):
         self.x_position = x_position
         self.y_position = y_position
         self.health = health
         self.ship_img = None
         self.laser_img = None
         self.lasers = []
-        self.cool_down_counter = 0 
+        self.cool_down_counter = 0
 
+    def draw(self, window):
+        window.blit(self.ship_img, (self.x_position, self.y_position))
+
+    def get_width(self):
+        return self.ship_img.get_width()
+    def get_height(self):
+        return self.ship_img.get_height()
+
+# player 
+class Player(Ship):
+    def __init__(self, x_position, y_position, health = 100):
+        super().__init__(x_position, y_position, health)
+        self.ship_img = YELLOW_SPACE_
+        self.lasers_img = YELLOW_LASER
+        self.mask = pygame.mask.from_surface(self.ship_img)
+        self.max_health = health
 
 def main():
     run = True
@@ -44,6 +60,9 @@ def main():
     level = 1
     lives = 5
     main_font = pygame.font.SysFont("comicsans", 50)
+    player_speed = 5
+    player = Player(300, 650)
+
     clock = pygame.time.Clock()
 
     def redraw_window():
@@ -56,6 +75,7 @@ def main():
         WIN.blit(lives_label, (10, 10))
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
+        player.draw(WIN)
         pygame.display.update()
 
     while run:
@@ -64,5 +84,16 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run == False
+
+        # Check which keys are pressed
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a] and player.x_position - player_speed > 0:  # move left
+            player.x_position -= player_speed
+        if keys[pygame.K_d] and player.x_position + player_speed + 50 < WIDTH : # move right
+            player.x_position += player_speed
+        if keys[pygame.K_w] and player.y_position - player_speed > 0:  # move up
+            player.y_position -= player_speed
+        if keys[pygame.K_s] and player.y_position + player_speed + 50 < HEIGHT: # move down
+            player.y_position += player_speed
 
 main()
