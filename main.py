@@ -8,11 +8,10 @@ WIDTH, HEIGHT = 750, 750
 WIN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Space Invaders")
 
-
 # Load Enemy graphics
-RED_SPACE_ = pygame.image.load(os.path.join("pixel_ship_red_small.png"))
-GREEN_SPACE_ = pygame.image.load(os.path.join("pixel_ship_green_small.png"))
-BLUE_SPACE_ = pygame.image.load(os.path.join("pixel_ship_blue_small.png"))
+RED_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_red_small.png"))
+GREEN_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_green_small.png"))
+BLUE_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_blue_small.png"))
 
 # Load player 
 YELLOW_SPACE_ = pygame.image.load(os.path.join("pixel_ship_yellow.png"))
@@ -42,6 +41,7 @@ class Ship():
 
     def get_width(self):
         return self.ship_img.get_width()
+
     def get_height(self):
         return self.ship_img.get_height()
 
@@ -54,13 +54,33 @@ class Player(Ship):
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
 
+class Enemy(Ship):
+    COLOR_MAP = {
+        "red": (RED_SPACE_SHIP, RED_LASER),
+        "green": (GREEN_SPACE_SHIP, GREEN_LASER),
+        "blue": (BLUE_SPACE_SHIP, BLUE_LASER)
+    }
+    def __init__(self,x_position, y_position,color, health = 100):
+        super().__init__(x_position,y_position,health)
+        self.ship_img, self.laser_img = self.COLOR_MAP[color]
+        self.mask = pygame.mask.from_surface(self.ship_img)
+
+    def move(self,speed):
+        self.y_position += speed
+
 def main():
     run = True
     FPS = 60
-    level = 1
+    level = 0
     lives = 5
     main_font = pygame.font.SysFont("comicsans", 50)
+
+    enemies = []
+    wave_length = 5
+    enemy_speed = 0
+
     player_speed = 5
+
     player = Player(300, 650)
 
     clock = pygame.time.Clock()
@@ -76,11 +96,21 @@ def main():
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
         player.draw(WIN)
+        enemy.draw(WIN)
+
         pygame.display.update()
 
     while run:
         clock.tick(FPS)  # Clock tick will be se to 60FPS
-        redraw_window()
+
+        if len(enemies) == 0:
+            level += 1
+            wave_length += 5
+            for i in range (wave_length):
+                enemy = Enemy(random.randrange(50, WIDTH - 100), random.randrange(-1500, -100),
+                              random.choice(["red", "blue", "green"]))
+                enemies.append(enemy)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run == False
@@ -89,11 +119,16 @@ def main():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] and player.x_position - player_speed > 0:  # move left
             player.x_position -= player_speed
-        if keys[pygame.K_d] and player.x_position + player_speed + 50 < WIDTH : # move right
+        if keys[pygame.K_d] and player.x_position + player_speed + player.get_width() < WIDTH : # move right
             player.x_position += player_speed
         if keys[pygame.K_w] and player.y_position - player_speed > 0:  # move up
             player.y_position -= player_speed
-        if keys[pygame.K_s] and player.y_position + player_speed + 50 < HEIGHT: # move down
+        if keys[pygame.K_s] and player.y_position + player_speed + player.get_height() < HEIGHT: # move down
             player.y_position += player_speed
+
+        for enemy in enemies:
+            enemy.move(enemy_speed)
+
+        redraw_window()
 
 main()
