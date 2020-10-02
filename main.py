@@ -4,7 +4,7 @@ import os
 import time
 import random
 
-WIDTH, HEIGHT = 750, 750
+WIDTH, HEIGHT = 650, 650
 WIN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Space Invaders")
 
@@ -25,8 +25,29 @@ YELLOW_LASER = pygame.image.load(os.path.join("pixel_laser_yellow.png"))
 # Background
 BG = pygame.transform.scale(pygame.image.load(os.path.join("background-black.png")), (WIDTH, HEIGHT))
 
+class Laser:
+    def __init__(self,x,y,image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def draw(self,window):
+        window.blit(self.image, (self.x,self.y))
+
+    def move(self,vel):
+        self.y += vel
+
+    def off_screen(self,height):
+        return self.y <= height and self.y >= 0
+
+    def collision(self, obj):
+        return collide(obj, self)
+
+
 # Abstract class I will use to inherent all other s
 class Ship():
+    COOLDOWN = 30
     def __init__(self, x_position, y_position, health = 100):
         self.x_position = x_position
         self.y_position = y_position
@@ -38,6 +59,30 @@ class Ship():
 
     def draw(self, window):
         window.blit(self.ship_img, (self.x_position, self.y_position))
+        for laser in self.lasers:
+            laser.draw(window)
+
+    def move_lasers(self,vel,obj):
+        self.cooldown()
+        for laser in self.laser:
+            laser.move(vel)
+            if laser.off_screen(HEIGHT):
+                self.lasers.remove(laser)
+            elif laser.collision(obj):
+                obj.health -= 10
+                self.lasers.remove(laser)
+
+    def cooldown(self):
+        if self.cool_down_counter >= self.COOLDOWN:
+            self.cool_down_counter = 0
+        elif self.cool_down_counter > 0:
+            self.cool_down_counter += 1
+
+    def shoot(self):
+        if self.cool_down_counter == 0:
+            laser = Laser(x,y, self.laser_img)
+            self.lasers.append(laser)
+            self.cool_down_counter = 1
 
     def get_width(self):
         return self.ship_img.get_width()
@@ -54,6 +99,8 @@ class Player(Ship):
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
 
+    
+
 class Enemy(Ship):
     COLOR_MAP = {
         "red": (RED_SPACE_SHIP, RED_LASER),
@@ -67,6 +114,11 @@ class Enemy(Ship):
 
     def move(self,speed):
         self.y_position += speed
+
+def collide(obj1,obj2):
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+    return obj1.mask.overlap(obj2.mask, (offset_x,offset_y)) != None
 
 def main():
     run = True
@@ -84,6 +136,7 @@ def main():
 
     player = Player(300, 650)
     lost = False
+    lost_count = 0
 
     clock = pygame.time.Clock()
 
@@ -109,9 +162,17 @@ def main():
 
     while run:
         clock.tick(FPS)  # Clock tick will be se to 60FPS
+        redraw_window()
 
         if lives <= 0 or player.health <=0:
             lost = True
+            lost_count += 1
+
+        if lost:
+            if lost_count > FPS * 3:
+                run = False
+            else:
+                continue
 
         if len(enemies) == 0:
             level += 1
@@ -135,6 +196,9 @@ def main():
             player.y_position -= player_speed
         if keys[pygame.K_s] and player.y_position + player_speed + player.get_height() < HEIGHT: # move down
             player.y_position += player_speed
+        if keys[pygame.K_SPACE]:
+            player.shoot()
+
 
         for enemy in enemies[:]:
             enemy.move(enemy_speed)
@@ -142,6 +206,5 @@ def main():
                 lives -= 1
                 enemies.remove(enemy)
 
-        redraw_window()
 
 main()
