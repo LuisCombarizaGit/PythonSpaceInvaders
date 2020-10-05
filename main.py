@@ -13,7 +13,7 @@ RED_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_red_small.png"))
 GREEN_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_green_small.png"))
 BLUE_SPACE_SHIP = pygame.image.load(os.path.join("pixel_ship_blue_small.png"))
 
-# Load player 
+# Load player
 YELLOW_SPACE_ = pygame.image.load(os.path.join("pixel_ship_yellow.png"))
 
 # Load laser
@@ -45,7 +45,7 @@ class Laser:
         return collide(obj, self)
 
 
-# Abstract class I will use to inherent all other s
+# Abstract class I will use to in herent all other s
 class Ship():
     COOLDOWN = 30
     def __init__(self, x_position, y_position, health = 100):
@@ -53,7 +53,7 @@ class Ship():
         self.y_position = y_position
         self.health = health
         self.ship_img = None
-        self.laser_img = None
+        self.laser_img = YELLOW_LASER
         self.lasers = []
         self.cool_down_counter = 0
 
@@ -81,7 +81,7 @@ class Ship():
 
     def shoot(self):
         if self.cool_down_counter == 0:
-            laser = Laser(self.x,self.y, self.laser_img)
+            laser = Laser(self.x_position,self.y_position, self.laser_img)
             self.lasers.append(laser)
             self.cool_down_counter = 1
 
@@ -91,7 +91,7 @@ class Ship():
     def get_height(self):
         return self.ship_img.get_height()
 
-# player 
+# player
 class Player(Ship):
     def __init__(self, x_position, y_position, health = 100):
         super().__init__(x_position, y_position, health)
@@ -112,7 +112,7 @@ class Player(Ship):
                         objs.remove(obj)
                         self.lasers.remove(laser)
 
-    def draw(self,window):
+    def draw(self, window):
         super().draw(window)
         self.healthbar(window)
 
@@ -120,8 +120,8 @@ class Player(Ship):
     def healthbar(self, window):
         pygame.draw.rect(window, (255, 0, 0),
                      (self.x_position, self.y_position + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
-        pygame.draw.rect(window, (0, 255, 0), (
-        self.x_position, self.y_position + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health / self.max_health), 10))
+        pygame.draw.rect(window, (0, 255, 0), (self.x_position, self.y_position + self.ship_img.get_height() +
+                                               10, self.ship_img.get_width() * (self.health / self.max_health), 10))
 
 
 class Enemy(Ship):
@@ -140,7 +140,7 @@ class Enemy(Ship):
 
     def shoot(self):
         if self.cool_down_counter == 0:
-            laser = Laser(self.x_position, self.y_position, self.laser_img)
+            laser = Laser(self.x_position - 15, self.y_position, self.laser_img)
             self.lasers.append(laser)
             self.cool_down_counter = 1
 
@@ -159,13 +159,14 @@ def main():
 
     enemies = []
     wave_length = 5
-    enemy_speed = 2
+    enemy_speed = 1
 
     player_speed = 5
 
     player = Player(290, 500)
     lost = False
     lost_count = 0
+    enemy_laser_vel = 3
     laser_vel = 5
 
     clock = pygame.time.Clock()
@@ -227,16 +228,16 @@ def main():
             player.x_position += player_speed
         if keys[pygame.K_w] and player.y_position - player_speed > 0:  # move up
             player.y_position -= player_speed
-        if keys[pygame.K_s] and player.y_position + player_speed + player.get_height() < HEIGHT: # move down
+        if keys[pygame.K_s] and player.y_position + player_speed + player.get_height() + 15 < HEIGHT: # move down
             player.y_position += player_speed
         if keys[pygame.K_SPACE]:
             player.shoot()
 
         for enemy in enemies[:]:
             enemy.move(enemy_speed)
-            enemy.move_lasers(laser_vel, player)
+            enemy.move_lasers(enemy_laser_vel, player)
 
-            if random.randrange(0,2*60) == 1:
+            if random.randrange(0,4*60) == 1:
                 enemy.shoot()
 
             if collide(enemy, player):
@@ -249,5 +250,20 @@ def main():
 
         player.move_lasers(-laser_vel, enemies)
 
+def main_menu():
+    title_font = pygame.font.SysFont("comicsans", 70)
+    run = True
+    while run:
+        WIN.blit(BG, (0,0))
+        title_label = title_font.render("Right click to begin", 1, (255,255,255))
+        WIN.blit(title_label, ((WIDTH/2) - (title_label.get_width()/2), 350))
+        pygame.display.update()
 
-main()
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                main()
+            if event.type == pygame.QUIT:
+                run = False
+    pygame.quit()
+
+main_menu()
