@@ -27,19 +27,19 @@ BG = pygame.transform.scale(pygame.image.load(os.path.join("background-black.png
 
 class Laser:
     def __init__(self,x,y,image):
-        self.x = x
-        self.y = y
+        self.x_position = x
+        self.y_position = y
         self.image = image
         self.mask = pygame.mask.from_surface(self.image)
 
     def draw(self,window):
-        window.blit(self.image, (self.x,self.y))
+        window.blit(self.image, (self.x_position,self.y_position))
 
     def move(self,vel):
-        self.y += vel
+        self.y_position += vel
 
     def off_screen(self,height):
-        return not self.y <= height and self.y >= 0
+        return not self.y_position <= height and self.y_position >= 0
 
     def collision(self, obj):
         return collide(obj, self)
@@ -116,12 +116,13 @@ class Player(Ship):
         super().draw(window)
         self.healthbar(window)
 
-    def healthbar(self,window):
-        pygame.draw.rect(window, (255,0,0), (self.x_position,self.y_position + self.ship_img.get_height()+10,
-                                           self.ship_img.get_width(),10))
 
-        pygame.draw.rect(window, (0, 255, 0), (self.x_position, self.y_position + self.ship_img.get_height() + 10,
-                                               self.ship_img.get_width() *(self.health/self.max_health), 10))
+    def healthbar(self, window):
+        pygame.draw.rect(window, (255, 0, 0),
+                     (self.x_position, self.y_position + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
+        pygame.draw.rect(window, (0, 255, 0), (
+        self.x_position, self.y_position + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health / self.max_health), 10))
+
 
 class Enemy(Ship):
     COLOR_MAP = {
@@ -139,7 +140,7 @@ class Enemy(Ship):
 
     def shoot(self):
         if self.cool_down_counter == 0:
-            laser = Laser(self.x-15, self.y, self.laser_img)
+            laser = Laser(self.x_position, self.y_position, self.laser_img)
             self.lasers.append(laser)
             self.cool_down_counter = 1
 
@@ -162,7 +163,7 @@ def main():
 
     player_speed = 5
 
-    player = Player(300, 650)
+    player = Player(290, 500)
     lost = False
     lost_count = 0
     laser_vel = 5
@@ -180,8 +181,11 @@ def main():
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
         player.draw(WIN)
+
         for j in enemies:
             j.draw(WIN)
+
+
 
         if lost:
             lost_label = lost_font.render("YOU LOST",1,(255,255,255))
